@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">EDR View for {{ db.name }}</h2>
+    <div class="card shadow-lg">
+        <div class="card-body text-center" style="overflow: auto; max-width: 100%; max-height: 600px;">
+            {% if image_data %}
+            <img id="edrImage" src="data:image/png;base64,{{ image_data }}" style="max-width: 100%; height: auto;" alt="EDR Graph">
+            <br>
+            <a id="downloadLink" class="btn btn-primary mt-3" download="edr_graph.png">Download EDR Graph</a>
+            <script>
+                // Set the href attribute of the download link to the image data
+                document.getElementById('downloadLink').href = document.getElementById('edrImage').src;
+            </script>
+            {% else %}
+            <p class="text-danger">Failed to generate EDR graph.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

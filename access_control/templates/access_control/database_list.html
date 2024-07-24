@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Available Databases</h2>
+    <div class="card shadow-lg">
+        <div class="card-body">
+            <div class="list-group">
+                {% for db in databases %}
+                <a href="{% url 'access_control:execute_query' db.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ db.name }}</h5>
+                        <small class="text-muted">{{ db.db_type }}</small>
+                    </div>
+                    <p class="mb-1 text-muted">Host: {{ db.host }}</p>
+                    <p class="mb-1 text-muted">Port: {{ db.port }}</p>
+                </a>
+                <a href="{% url 'access_control:edr_view' db.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">EDR View</h5>
+                    </div>
+                </a>
+                <a href="{% url 'access_control:object_explorer' db.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">Object Explorer</h5>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

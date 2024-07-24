@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Object Explorer for {{ db_name }}</h2>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#tables" class="list-group-item list-group-item-action">Tables</a>
+                <a href="#views" class="list-group-item list-group-item-action">Views</a>
+                <a href="#procedures" class="list-group-item list-group-item-action">Procedures</a>
+                <a href="#functions" class="list-group-item list-group-item-action">Functions</a>
+                <a href="#triggers" class="list-group-item list-group-item-action">Triggers</a>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div id="tables" class="object-section">
+                <h3>Tables</h3>
+                <ul>
+                    {% for table in objects.tables %}
+                    <li><a href="{% url 'access_control:view_table_data' db_id=db_id table_name=table %}">{{ table }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="views" class="object-section">
+                <h3>Views</h3>
+                <ul>
+                    {% for view in objects.views %}
+                    <li>{{ view }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="procedures" class="object-section">
+                <h3>Procedures</h3>
+                <ul>
+                    {% for procedure in objects.procedures %}
+                    <li>{{ procedure }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="functions" class="object-section">
+                <h3>Functions</h3>
+                <ul>
+                    {% for function in objects.functions %}
+                    <li>{{ function }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="triggers" class="object-section">
+                <h3>Triggers</h3>
+                <ul>
+                    {% for trigger in objects.triggers %}
+                    <li>{{ trigger }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

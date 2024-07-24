@@ -1,0 +1,133 @@
+{% load i18n static jazzmin %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_title }} | {{ title }}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'admin/css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/dark_mode.css' %}">
+    <script src="{% static 'admin/js/theme.js' %}" defer></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .login-box {
+            width: 400px;
+            margin: auto;
+        }
+        .login-logo {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .btn-block {
+            border-radius: 20px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="login-logo">
+            <b>EFLOW</b> DB Admin
+        </div>
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">{{ jazzmin_settings.welcome_sign }}</p>
+                <form action="{{ request.path }}" method="post">
+                    {% csrf_token %}
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-danger" role="alert">
+                            {% blocktrans trimmed %}
+                                You are authenticated as {{ user.username }}, but are not authorized to
+                                access this page. Would you like to login to a different account?
+                            {% endblocktrans %}
+                        </div>
+                    {% endif %}
+                    {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <p>{{ field.label }}: {{ field.errors|join:", " }}</p>
+                                {% endif %}
+                            {% endfor %}
+                            {% if form.non_field_errors %}
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="input-group mb-3">
+                        <input type="text" name="username" class="form-control" placeholder="{{ form.username.label }}" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="password" name="password" class="form-control" placeholder="{{ form.password.label }}" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="text" name="otp_token" class="form-control" placeholder="{% trans 'OTP Token' %}" required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-key"></span>
+                            </div>
+                        </div>
+                    </div>
+                    {% url 'admin_password_reset' as password_reset_url %}
+                    {% if password_reset_url %}
+                        <div class="mb-3">
+                            <div class="password-reset-link text-center">
+                                <a href="{{ password_reset_url }}">
+                                    {% trans 'Forgotten your password or username?' %}
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn {{ jazzmin_ui.button_classes.primary }} btn-block">
+                                {% trans "Log in" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="login-footer">
+            <p>© 2024 CPLABS. All rights reserved.</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

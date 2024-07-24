@@ -1,0 +1,181 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- 쿼리 히스토리 -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3 class="card-title">Query History</h3>
+                </div>
+                <div class="card-body">
+                    <input class="form-control mb-3" id="historySearch" type="text" placeholder="Search history...">
+                    <ul class="list-group" id="historyListContent">
+                        {% for past_query in query_history %}
+                        <li class="list-group-item">
+                            <p>{{ past_query.query_text }}</p>
+                            <button class="btn btn-light btn-sm" onclick="copyToClipboard('{{ past_query.query_text }}')">Copy</button>
+                            <button class="btn btn-light btn-sm" onclick="applyToEditor('{{ past_query.query_text }}')">Apply</button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="row">
+                <!-- 쿼리 실행 -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title">Execute Query on {{ database.name }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="query_text">Query</label>
+                                    <textarea id="query_text" name="query_text" class="form-control">{{ form.query_text.value }}</textarea>
+                                </div>
+                                <button type="submit" name="execute" class="btn btn-primary">Execute</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- 쿼리 결과 -->
+                    {% if query %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h3 class="card-title">Query Result</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if query.success %}
+                                {% if query.result %}
+                                <div style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                {% for column in query.columns %}
+                                                <th>{{ column }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in query.result %}
+                                            <tr>
+                                                {% for cell in row %}
+                                                <td>{{ cell }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <pre>{{ query.result }}</pre>
+                                {% endif %}
+                                <a href="{% url 'access_control:commit_transaction' query.id %}" class="btn btn-success">Commit</a>
+                                <a href="{% url 'access_control:rollback_transaction' query.id %}" class="btn btn-danger">Rollback</a>
+                            {% else %}
+                            <div class="alert alert-danger">
+                                <p>Error: {{ query.error_message }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 테이블 목록 -->
+                <div class="col-md-4">
+                    {% if tables %}
+                    <div class="card mt-4">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">Available Tables</h3>
+                            <button class="btn btn-light" type="button" data-toggle="collapse" data-target="#tableList" aria-expanded="false" aria-controls="tableList">
+                                Toggle
+                            </button>
+                        </div>
+                        <div class="card-body collapse" id="tableList">
+                            <input class="form-control mb-3" id="tableSearch" type="text" placeholder="Search tables...">
+                            <ul class="list-group" id="tableListContent">
+                                {% for table in tables %}
+                                <li class="list-group-item">{{ table }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.css">
+<!-- CodeMirror JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.js"></script>
+<!-- CodeMirror SQL mode -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/sql/sql.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+    const tableSearch = document.getElementById('tableSearch');
+    const tableListContent = document.getElementById('tableListContent');
+    const historySearch = document.getElementById('historySearch');
+    const historyListContent = document.getElementById('historyListContent');
+
+    tableSearch.addEventListener('keyup', function() {
+        const filter = tableSearch.value.toLowerCase();
+        const tables = tableListContent.getElementsByTagName('li');
+
+        Array.from(tables).forEach(function(table) {
+            const text = table.textContent || table.innerText;
+            if (text.toLowerCase().indexOf(filter) > -1) {
+                table.style.display = '';
+            } else {
+                table.style.display = 'none';
+            }
+        });
+    });
+
+    historySearch.addEventListener('keyup', function() {
+        const filter = historySearch.value.toLowerCase();
+        const histories = historyListContent.getElementsByTagName('li');
+
+        Array.from(histories).forEach(function(history) {
+            const text = history.textContent || history.innerText;
+            if (text.toLowerCase().indexOf(filter) > -1) {
+                history.style.display = '';
+            } else {
+                history.style.display = 'none';
+            }
+        });
+    });
+
+    // CodeMirror 초기화
+    const queryTextArea = document.getElementById('query_text');
+    const editor = CodeMirror.fromTextArea(queryTextArea, {
+        mode: 'text/x-sql',
+        lineNumbers: true,
+        matchBrackets: true,
+        autoCloseBrackets: true
+    });
+
+    // Apply to editor 함수
+    window.applyToEditor = function(text) {
+        editor.setValue(text);
+    };
+
+    // Copy to clipboard 함수
+    window.copyToClipboard = function(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Query copied to clipboard');
+        }, function(err) {
+            alert('Failed to copy query');
+        });
+    };
+});
+</script>
+{% endblock %}
